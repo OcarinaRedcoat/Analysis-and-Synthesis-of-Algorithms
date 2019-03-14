@@ -1,9 +1,10 @@
 #include <iostream>
 #include <list>
+#include <stack>
+#include <algorithm>
 
 #define WHITE 0
-#define GREY 1
-#define BLACK 2
+#define BLACK 1
 
 using namespace std;
 
@@ -13,12 +14,12 @@ class Vertex{
     public:
         int _d;
         int _low;
-        int _color;
+        bool _visit;
         list<Vertex *> _cons;
 
         Vertex(){
             _d = -1;
-            _color = WHITE;
+            _visit = false;
         }
 
         void set(int id){
@@ -92,6 +93,62 @@ class Graph{
         }
 };
 
+class Tarjan{
+    Graph *_g;
+    int _visited;
+    int _numberOfSCC;
+    stack<Vertex *> _l;
+
+    void tarjanVisit(Vertex &v){
+        v._d = _visited;
+        v._low = _visited;
+        _visited++;
+        _l.push(&v);
+        for(Vertex *it: v._cons){
+            if (it->_d == -1){
+                    tarjanVisit(*it);
+                }
+            if (!it->_visit){
+                v._low = min(it->_low, v._low);
+            }
+
+        }
+
+        if (v._d == v._low){
+            _numberOfSCC++;
+            Vertex *vertex_stack; 
+            do{
+                vertex_stack = _l.top();
+                vertex_stack->_visit = true;
+                _l.pop();
+            } while(&v != vertex_stack);
+        }
+
+    }
+
+
+    public: 
+        Tarjan(Graph *g){
+        _visited = 1;
+        _g = g;
+        _numberOfSCC = 0;
+        }
+
+        ~Tarjan(){}
+
+        void SCC_Tarjan(){
+            for (int i = 0; i < _g->getNumberVertexes(); i++){
+                if ( _g->vertexes[i]._d == -1){
+                    tarjanVisit(_g->vertexes[i]);
+                }
+            }
+        }        
+        
+        int getNumberOfSCC(){
+            return _numberOfSCC;
+        }
+};
+
 
 
 int main(int argc, char **argv){
@@ -101,7 +158,11 @@ int main(int argc, char **argv){
     if (graph.creatGraph() == -1){
         return -1;
     }
-    graph.dislay();
+
+    Tarjan *t = new Tarjan(&graph);
+    t->SCC_Tarjan();
+    printf("%d\n", t->getNumberOfSCC());
+    //graph.dislay();
     
     return 0;
 

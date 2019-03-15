@@ -2,11 +2,17 @@
 #include <list>
 #include <stack>
 #include <algorithm>
+#include <memory>
 
 #define WHITE 0
 #define BLACK 1
 
 using namespace std;
+
+class SCC;
+class Vertex;
+class Graph;
+class Tarjan;
 
 class Vertex{
     private:
@@ -16,6 +22,7 @@ class Vertex{
         int _low;
         bool _visit;
         list<Vertex *> _cons;
+        shared_ptr<SCC> _mySCC;
 
         Vertex(){
             _d = -1;
@@ -93,11 +100,31 @@ class Graph{
         }
 };
 
+class SCC{
+  public:
+    Vertex *_root;
+    SCC(){
+        _root = NULL;
+    }
+
+    void assRoot(Vertex *r){
+        if (_root == NULL || _root->get() < r->get())
+        {
+            _root = r;
+        }
+    }
+
+    int get(){
+        return _root->get();
+    }
+};
+
 class Tarjan{
     Graph *_g;
     int _visited;
     int _numberOfSCC;
     stack<Vertex *> _l;
+
 
     void tarjanVisit(Vertex &v){
         v._d = _visited;
@@ -115,13 +142,18 @@ class Tarjan{
         }
 
         if (v._d == v._low){
-            _numberOfSCC++;
-            Vertex *vertex_stack; 
+            Vertex *vertex_stack;
+
+            shared_ptr<SCC> scc(new SCC());
+
             do{
                 vertex_stack = _l.top();
+                vertex_stack->_mySCC = scc;
                 vertex_stack->_visit = true;
+                scc->assRoot(vertex_stack);
                 _l.pop();
             } while(&v != vertex_stack);
+            _numberOfSCC++;
         }
 
     }
@@ -137,6 +169,7 @@ class Tarjan{
         ~Tarjan(){}
 
         void SCC_Tarjan(){
+
             for (int i = 0; i < _g->getNumberVertexes(); i++){
                 if ( _g->vertexes[i]._d == -1){
                     tarjanVisit(_g->vertexes[i]);

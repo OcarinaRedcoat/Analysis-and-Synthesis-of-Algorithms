@@ -1,7 +1,7 @@
 from random import *
 
-N = 20 # randint(1, 10)
-M = 10  # randint(1, 10)
+N = 999999 # randint(1, 10)
+M = 999999 # randint(1, 10)
 
 print(N)
 print(M)

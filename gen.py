@@ -1,7 +1,10 @@
 from random import *
+import sys
 
-N = 999999 # randint(1, 10)
-M = 999999 # randint(1, 10)
+# python gen.py x y > output.in
+
+N = int(sys.argv[1])  # randint(1, 10)
+M = int(sys.argv[2])  # randint(1, 10)
 
 print(N)
 print(M)

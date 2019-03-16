@@ -9,5 +9,8 @@ p1: p1.cpp
 
 clean: 
 	@echo 
-	@echo Cleaning project ...
+	@echo ----  Cleaning project ...  ----
+	@echo 
 	rm -f $(TARGET)
+	@echo
+	@echo ----  Very nice!  ----

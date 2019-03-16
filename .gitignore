@@ -1,1 +1,9 @@
+#Ignore Windows exe
+*.exe
+
+#Ignore vscode workspace settings
 .vscode
+
+#Ignore test results
+tests/*.diff
+tests/*.my.out

@@ -234,11 +234,13 @@ class Tarjan {
   }
 
   void output() {
+    bool first = true;
     printf("%d\n", _numberOfSCC);
-    int nNodesBrakeSCC = 0;
     _roots.sort();
     for (Vertex *v : _roots) {
+      if(!first) printf(" ");
       printf("%d ", v->getId());
+      first = false;
     }
     printf("\n");
     printf("%d\n", _articulationPointsIds.size());
@@ -272,7 +274,7 @@ int main(int argc, char **argv) {
   newTarjan->SCC_Tarjan();
 
   t->output();
-  printf("%d", newTarjan->getBiggestSCC());
+  printf("%d\n", newTarjan->getBiggestSCC());
 
   return 0;
 }

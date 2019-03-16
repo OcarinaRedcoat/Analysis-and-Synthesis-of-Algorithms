@@ -1,16 +1,17 @@
 SOURCE = p1.cpp
 TARGET = p1
 CC = g++
+FLAGS = -Wall
 
 all: p1
 
 p1: p1.cpp
-	$(CC) $(SOURCE) -o $(TARGET)
+	$(CC) $(SOURCE) -o $(TARGET) $(FLAGS)
 
 clean: 
 	@echo 
 	@echo ----  Cleaning project ...  ----
 	@echo 
-	rm -f $(TARGET)
+	rm -f $(TARGET) ./tests/*.my.out ./tests/*.diff
 	@echo
 	@echo ----  Very nice!  ----

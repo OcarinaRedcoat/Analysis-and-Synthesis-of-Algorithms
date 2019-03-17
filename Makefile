@@ -1,7 +1,7 @@
 SOURCE = p1.cpp
 TARGET = p1
 CC = g++
-FLAGS = -Wall
+FLAGS = -Wall -Wextra -pedantic
 
 all: p1
 

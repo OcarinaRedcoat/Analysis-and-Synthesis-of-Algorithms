@@ -71,8 +71,9 @@ class Vertex {
   void display() {
     list<Vertex *>::iterator it;
     for (it = _cons.begin(); it != _cons.end(); ++it) {
-      printf("id: %d, d: %d, low: %d - ", (*it)->getId(), (*it)->_d,
-             (*it)->_low);
+      if (!(*it)->_ignore)
+        printf("id: %d, d: %d, low: %d - ", (*it)->getId(), (*it)->_d,
+               (*it)->_low);
     }
   }
 
@@ -139,9 +140,11 @@ class Graph {
 
   void dislay() {
     for (int i = 0; i < _n; i++) {
-      printf("%d: ", vertexes[i].getId());
-      vertexes[i].display();
-      printf("NULL\n");
+      if (!vertexes[i]._ignore) {
+        printf("%d: ", vertexes[i].getId());
+        vertexes[i].display();
+        printf("NULL\n");
+      }
     }
   }
 };
@@ -254,7 +257,7 @@ class Tarjan {
   int getBiggestSCC() { return _biggestSCC; }
 };
 
-int main(int argc, char **argv) {
+int main() {
   Graph graph;
 
   if (graph.creatGraphFromStdin() == -1) {

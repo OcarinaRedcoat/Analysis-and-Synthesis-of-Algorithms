@@ -72,7 +72,6 @@ class Vertex {
     }
   }
 
-  bool operator==(const Vertex &v) const { return _id == v._id; }
 };
 
 class Graph {
@@ -259,22 +258,29 @@ class Tarjan {
 };
 
 int main() {
-  Graph graph;
+  Graph *graph = new Graph();
 
-  if (graph.creatGraphFromStdin() == -1) {
+  if (graph->creatGraphFromStdin() == -1) {
     return -1;
   }
 
-  Tarjan *t = new Tarjan(&graph);
+  Tarjan *t = new Tarjan(graph);
   t->SCC_Tarjan();  // O(V+E)
 
-  graph.resetGraph();
+  // Print results
+  t->output();
+  delete t;
 
-  Tarjan *newTarjan = new Tarjan(&graph);
+  graph->resetGraph();
+
+  Tarjan *newTarjan = new Tarjan(graph);
   newTarjan->SCC_Tarjan();  // O(V+E)
 
-  t->output();
+  // Print results
   printf("%d\n", newTarjan->getBiggestSCC());
+
+  delete newTarjan;
+  delete graph;
 
   return 0;
 }

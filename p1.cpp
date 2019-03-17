@@ -169,6 +169,7 @@ class Tarjan {
     _l.push(&v);
 
     for (Vertex *it : v._cons) {
+      if(it->_ignore) continue;
       if (it->_d == -1) {
         treeChildren++;
         it->_parentId = v.getId();
@@ -274,7 +275,6 @@ int main() {
     graph.removeVertex((*it)->getId());
   }
   graph.resetGraph();
-
   Tarjan *newTarjan = new Tarjan(&graph);
   newTarjan->SCC_Tarjan();
 

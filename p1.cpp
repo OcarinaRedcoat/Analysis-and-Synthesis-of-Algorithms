@@ -24,7 +24,6 @@ class Vertex {
   int _d;
   int _low;
   bool _visit;
-  int _scc;
   list<Vertex *> _cons;
   int _parentId;
   bool _ap;
@@ -71,7 +70,6 @@ class Vertex {
                (*it)->_low);
     }
   }
-
 };
 
 class Graph {
@@ -118,12 +116,6 @@ class Graph {
   }
 
   int getNumberVertexes() { return _n; }
-
-  void removeVertex(int id) {
-    for (int i = 0; i < _n; i++) {
-      if (vertexes[i].getId() == id) vertexes[i]._ignore = true;
-    }
-  }
 
   void resetGraph() {
     for (int i = 0; i < _n; i++) {
@@ -189,19 +181,17 @@ class Tarjan {
     if (v._d == v._low) {
       Vertex *vertex_stack;
       int currentSCCSize = 0;
+      bool newSCC = true;
       do {
         currentSCCSize++;
         vertex_stack = _l.top();
-        vertex_stack->_scc = _numberOfSCC;
 
-        // Add roots
-        if (_roots.back() == NULL ||
-            _roots.back()->_scc != vertex_stack->_scc) {
+        if (_roots.back() == NULL || newSCC) {
           _roots.push_back(vertex_stack);
+          newSCC = false;
         } else {
           Vertex *it = _roots.back();
-          if (it->getId() < vertex_stack->getId() &&
-              it->_scc == vertex_stack->_scc) {
+          if (it->getId() < vertex_stack->getId()) {
             _roots.pop_back();
             _roots.push_back(vertex_stack);
           }

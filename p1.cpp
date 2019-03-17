@@ -11,11 +11,6 @@
 
 using namespace std;
 
-typedef struct {
-  int start;
-  int end;
-} Connection;
-
 class SCC;
 class Vertex;
 class Graph;
@@ -84,7 +79,6 @@ class Graph {
  private:
   int _n;
   int _m;
-  Connection *connections;
 
  public:
   Vertex *vertexes;
@@ -154,14 +148,12 @@ class Tarjan {
   int _visited;
   int _numberOfSCC;
   int _biggestSCC;
+  int _nArticulationPoints;
   stack<Vertex *> _l;
   list<Vertex *> _roots;
-  list<Vertex *> _articulationPointsIds;
 
   void tarjanVisit(Vertex &v) {
-    if (v._ignore) {
-      return;
-    }
+    if (v._ignore) return;  // Ignore removed vertexes
     int treeChildren = 0;
     v._d = _visited;
     v._low = _visited;
@@ -169,7 +161,7 @@ class Tarjan {
     _l.push(&v);
 
     for (Vertex *it : v._cons) {
-      if(it->_ignore) continue;
+      if (it->_ignore) continue;  // Ignore removed vertexes
       if (it->_d == -1) {
         treeChildren++;
         it->_parentId = v.getId();
@@ -181,7 +173,7 @@ class Tarjan {
         // than the discovery value of v.
         if (v._parentId != -1 && it->_low >= v._d && !v._ap) {
           v._ap = true;
-          _articulationPointsIds.push_back(&v);
+          _nArticulationPoints++;
         }
 
       } else if (v.getId() != it->_parentId) {
@@ -192,7 +184,7 @@ class Tarjan {
     // Case 1, v is root of the tree wich has two or more chilren.
     if (v._parentId == -1 && treeChildren > 1 && !v._ap) {
       v._ap = true;
-      _articulationPointsIds.push_back(&v);
+      _nArticulationPoints++;
     };
 
     if (v._d == v._low) {
@@ -202,6 +194,8 @@ class Tarjan {
         currentSCCSize++;
         vertex_stack = _l.top();
         vertex_stack->_scc = _numberOfSCC;
+
+        // Add roots
         if (_roots.back() == NULL ||
             _roots.back()->_scc != vertex_stack->_scc) {
           _roots.push_back(vertex_stack);
@@ -213,6 +207,12 @@ class Tarjan {
             _roots.push_back(vertex_stack);
           }
         }
+
+        // Remove articulation points
+        if (vertex_stack->_ap) {
+          vertex_stack->_ignore = true;
+        }
+
         vertex_stack->_visit = true;
         _l.pop();
       } while (&v != vertex_stack);
@@ -227,6 +227,7 @@ class Tarjan {
     _g = g;
     _numberOfSCC = 0;
     _biggestSCC = 0;
+    _nArticulationPoints = 0;
   }
 
   ~Tarjan() {}
@@ -236,6 +237,7 @@ class Tarjan {
       if (_g->vertexes[i]._d == -1) {
         tarjanVisit(_g->vertexes[i]);
       }
+      if (_visited == _g->getNumberVertexes()) return;
     }
   }
 
@@ -249,10 +251,8 @@ class Tarjan {
       first = false;
     }
     printf("\n");
-    printf("%d\n", _articulationPointsIds.size());
+    printf("%d\n", _nArticulationPoints);
   }
-
-  list<Vertex *> getAPIdList() { return _articulationPointsIds; }
 
   int getNumberOfSCC() { return _numberOfSCC; }
   int getBiggestSCC() { return _biggestSCC; }
@@ -266,17 +266,12 @@ int main() {
   }
 
   Tarjan *t = new Tarjan(&graph);
-  t->SCC_Tarjan();
+  t->SCC_Tarjan();  // O(V+E)
 
-  list<Vertex *> apList = t->getAPIdList();
-
-  list<Vertex *>::iterator it;
-  for (it = apList.begin(); it != apList.end(); it++) {
-    graph.removeVertex((*it)->getId());
-  }
   graph.resetGraph();
+
   Tarjan *newTarjan = new Tarjan(&graph);
-  newTarjan->SCC_Tarjan();
+  newTarjan->SCC_Tarjan();  // O(V+E)
 
   t->output();
   printf("%d\n", newTarjan->getBiggestSCC());

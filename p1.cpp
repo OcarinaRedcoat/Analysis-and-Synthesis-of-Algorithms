@@ -171,12 +171,7 @@ class Tarjan {
         it->_parentId = v.getId();
 
         tarjanVisit(*it);
-
-        // Case 1, v is root of the tree wich has two or more chilren.
-        if (v._parentId == -1 && treeChildren > 1 && !v._ap) {
-          v._ap = true;
-          _articulationPointsIds.push_back(&v);
-        };
+        v._low = min(it->_low, v._low);
 
         // Case 2 If v is not root and low value of one of its child is bigger
         // than the discovery value of v.
@@ -184,10 +179,17 @@ class Tarjan {
           v._ap = true;
           _articulationPointsIds.push_back(&v);
         }
+
       } else if (v.getId() != it->_parentId) {
         v._low = min(it->_d, v._low);
       }
     }
+
+    // Case 1, v is root of the tree wich has two or more chilren.
+    if (v._parentId == -1 && treeChildren > 1 && !v._ap) {
+      v._ap = true;
+      _articulationPointsIds.push_back(&v);
+    };
 
     if (v._d == v._low) {
       Vertex *vertex_stack;
@@ -238,8 +240,8 @@ class Tarjan {
     printf("%d\n", _numberOfSCC);
     _roots.sort();
     for (Vertex *v : _roots) {
-      if(!first) printf(" ");
-      printf("%d ", v->getId());
+      if (!first) printf(" ");
+      printf("%d", v->getId());
       first = false;
     }
     printf("\n");

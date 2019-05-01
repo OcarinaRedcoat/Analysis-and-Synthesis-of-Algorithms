@@ -182,6 +182,7 @@ class Tarjan {
       Vertex *vertex_stack;
       int currentSCCSize = 0;
       bool newSCC = true;
+
       do {
         currentSCCSize++;
         vertex_stack = _l.top();

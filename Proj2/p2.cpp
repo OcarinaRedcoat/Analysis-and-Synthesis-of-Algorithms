@@ -1,13 +1,38 @@
 #include <stdio.h>
+#include <list>
 
+using namespace std;
 
+class ResidualArch{
+  public:
+    int capacity;
+
+    ResidualArch(){}
+
+    ResidualArch(int cap){
+      capacity = cap;
+    }
+};
 
 class Vertex{
   public:
     int production;
     int id;
+    
+    Vertex *predecessorVertex;
+    ResidualArch *predecessorArch;
 
+    list<ResidualArch *> arches; 
     Vertex(){}
+
+    Vertex(int i){
+      id = i;
+    }
+
+    Vertex(int i, int prod){ 
+      id = i; 
+      production = prod; 
+    }
 
     void setId(int i){
       id = i;
@@ -20,6 +45,9 @@ class Graph{
     int suppliers;
     int stations;
     int connections;
+
+    Vertex *source;
+    Vertex *hyper; //sink
     Vertex *vertexes;
 
     Graph(){
@@ -32,20 +60,17 @@ class Graph{
         return -1;
       }
 
-      vertexes = new Vertex[suppliers+stations+1];
-
-      Vertex *hyper = new Vertex();
-      hyper->setId(1);
+      vertexes = new Vertex[suppliers+stations+2];
+      source = new Vertex();
+      hyper = new Vertex(1); //sink
 
       for (int i = 1; i <= suppliers; i++){
-        Vertex *newSupplier = new Vertex();
-        newSupplier->setId(i + 1);
+        Vertex *newSupplier = new Vertex(i + 1);
         scanf("%d", &newSupplier->production);
       }
 
       for (int i = 1; i <= stations; i++){
-        Vertex *newStation = new Vertex();
-        newStation->setId(suppliers + i + 1);
+        Vertex *newStation = new Vertex(suppliers + i + 1);
         scanf("%d", &newStation->production);
       }
 
@@ -60,5 +85,7 @@ int main(){
   if(g.creatGraphFromStdin() == -1){
     return -1;
   }
+
+
 
 }

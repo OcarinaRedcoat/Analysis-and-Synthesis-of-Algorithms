@@ -46,8 +46,8 @@ class Vertex{
     }
 
     void addResidualArch(int cap){
-      ResidualArch *temp = new ResidualArch(cap); //TODO: missing capacity ask teacher
-      arches.push_back(temp); //
+      ResidualArch *temp = new ResidualArch(cap);
+      arches.push_back(temp); 
     }
   
 };
@@ -77,7 +77,7 @@ class Graph{
       hyper = new Vertex(1); //sink
 
       for (int i = 1; i <= suppliers; i++){
-        vertexes[i - 1].setId(i +1);
+        vertexes[i - 1].setId(i + 1);
         scanf("%d", &vertexes[i - 1].production);
         source->addResidualArch(vertexes[i].getId());
       }
@@ -90,7 +90,7 @@ class Graph{
       for (int i = 1; i <= connections; i++){
         int origin, destiny, capacity;
         scanf("%d %d %d", &origin, &destiny, &capacity);
-
+        vertexes[origin - 2].addResidualArch(capacity);
       }
 
       return 0;
@@ -104,7 +104,4 @@ int main(){
   if(g.creatGraphFromStdin() == -1){
     return -1;
   }
-
-
-
 }

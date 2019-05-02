@@ -77,19 +77,20 @@ class Graph{
       hyper = new Vertex(1); //sink
 
       for (int i = 1; i <= suppliers; i++){
-        vertexes[i].setId(i +1);
-        scanf("%d", &vertexes[i].production);
+        vertexes[i - 1].setId(i +1);
+        scanf("%d", &vertexes[i - 1].production);
         source->addResidualArch(vertexes[i].getId());
       }
 
       for (int i = 1; i <= stations; i++){
-        vertexes[i + suppliers].setId(i + suppliers + 1);
-        scanf("%d", &vertexes[i + suppliers].production);
+        vertexes[i + suppliers - 1].setId(i + suppliers + 1);
+        scanf("%d", &vertexes[i + suppliers - 1].production);
       }
 
       for (int i = 1; i <= connections; i++){
         int origin, destiny, capacity;
         scanf("%d %d %d", &origin, &destiny, &capacity);
+
       }
 
       return 0;

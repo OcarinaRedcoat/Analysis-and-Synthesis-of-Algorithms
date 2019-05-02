@@ -3,6 +3,8 @@
 
 using namespace std;
 
+class Vertex;
+
 class ResidualArch{
   public:
     int capacity;
@@ -12,30 +14,40 @@ class ResidualArch{
     ResidualArch(int cap){
       capacity = cap;
     }
+
+
 };
 
 class Vertex{
+  private:
+    int id;
   public:
     int production;
-    int id;
-    
+
     Vertex *predecessorVertex;
     ResidualArch *predecessorArch;
 
     list<ResidualArch *> arches; 
-    Vertex(){}
-
-    Vertex(int i){
-      id = i;
+    Vertex(){ // probably source and source has no predecessor Vertex or predecessor Arch
+      predecessorVertex = NULL;
+      predecessorArch = NULL;
     }
 
-    Vertex(int i, int prod){ 
+    Vertex(int i){ 
       id = i; 
-      production = prod; 
     }
 
     void setId(int i){
       id = i;
+    }
+
+    int getId(){
+      return id;
+    }
+
+    void addResidualArch(int cap){
+      ResidualArch *temp = new ResidualArch(cap); //TODO: missing capacity ask teacher
+      arches.push_back(temp); //
     }
   
 };
@@ -55,7 +67,7 @@ class Graph{
     }
 
     int creatGraphFromStdin(){
-      scanf("%d %d %d", &suppliers, stations, connections);
+      scanf("%d %d %d", &suppliers, &stations, &connections);
       if (suppliers <= 0 || stations < 0 || connections < 0){
         return -1;
       }
@@ -65,13 +77,19 @@ class Graph{
       hyper = new Vertex(1); //sink
 
       for (int i = 1; i <= suppliers; i++){
-        Vertex *newSupplier = new Vertex(i + 1);
-        scanf("%d", &newSupplier->production);
+        vertexes[i].setId(i +1);
+        scanf("%d", &vertexes[i].production);
+        source->addResidualArch(vertexes[i].getId());
       }
 
       for (int i = 1; i <= stations; i++){
-        Vertex *newStation = new Vertex(suppliers + i + 1);
-        scanf("%d", &newStation->production);
+        vertexes[i + suppliers].setId(i + suppliers + 1);
+        scanf("%d", &vertexes[i + suppliers].production);
+      }
+
+      for (int i = 1; i <= connections; i++){
+        int origin, destiny, capacity;
+        scanf("%d %d %d", &origin, &destiny, &capacity);
       }
 
       return 0;

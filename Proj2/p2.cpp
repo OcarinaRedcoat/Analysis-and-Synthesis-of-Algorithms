@@ -8,10 +8,9 @@ class Vertex;
 class ResidualArch{
     int capacity;
   public:
-    int flux;
 
     Vertex *dest_vertex;
-    ResidualArch *pair;
+    //ResidualArch *pair;
 
     ResidualArch(){}
 
@@ -24,10 +23,8 @@ class ResidualArch{
       return capacity;
     }
 
-        void addFlux(int f)
-    {
-        flux += f;
-        capacity = capacity - flux;
+    void addFlux(int f){
+        capacity = capacity - f;
     }
 
 };
@@ -90,7 +87,7 @@ class Graph{
         return -1;
       }
 
-      vertexes = new Vertex[suppliers+stations+2];
+      vertexes = new Vertex[suppliers+stations];
       source = new Vertex(0);
       hyper = new Vertex(1); //sink
 
@@ -98,6 +95,7 @@ class Graph{
         vertexes[i - 1].setId(i + 1);
         scanf("%d", &vertexes[i - 1].production);
         source->addResidualArch(vertexes[i - 1].production, &vertexes[i - 1]);
+
       }
 
       for (int i = 1; i <= stations; i++){
@@ -115,6 +113,19 @@ class Graph{
         }
       }
       return 0;
+    }
+
+    void display(){
+      for (int i = 0; i < suppliers+stations; i++){
+        printf("id: %d -- capacity: %d\n", vertexes[i].getId(), vertexes[i].production);
+      }
+
+      for (int i = 0; i < suppliers+stations; i++){
+        if(!vertexes[i].arches.empty())
+          for (ResidualArch *arch : vertexes[i].arches){
+            printf("orin: %d -- dest: %d -- capacity: %d\n", vertexes[i].getId(), arch->dest_vertex->getId(), arch->getCapacity());
+          }
+      }
     }
 };
 
@@ -188,40 +199,31 @@ class EdmondsKarp{
   public:
     EdmondsKarp(){}
 
-    int execute(Graph g){
+    void execute(Graph g){
       flow = 0;
 
+      BFS bfsAlgorithm;
       while (true){
-        BFS bfsAlgorithm;
 
         list<ResidualArch *> path = bfsAlgorithm.execute(g);
 
-        if (path.size() != 0){
-          //check how much flow we can send
+        if (!path.empty()){
           int df = INT_MAX;
           for (ResidualArch *arch : path){
-            if(arch->dest_vertex->predecessorVertex->getId() > 2*g.stations+1){
-              df = min(df, arch->dest_vertex->production);
-            }else{
               df = min(df, arch->getCapacity());
-            }
           }
+          flow += df;
           for (ResidualArch *arch : path){
-            if(arch->dest_vertex->predecessorVertex->getId() > 2*g.stations+1){
               arch->addFlux(df);
-            }else{
-              arch->addFlux(df);
-              //arc->pair->addFlux(-df);
-              flow += df;
           }
-          }
-        }
-          else{
-          printf("%d\n", flow);
-          return flow;
-          }
+        }else{
+          break;
         }
       }
+    }
+    void printOutput(){
+      printf("%d\n", flow);
+    }
     
 };
 
@@ -235,6 +237,7 @@ int main(){
   }
   EdmondsKarp karp;
   karp.execute(g);
+  karp.printOutput();
+  //g.display();
   return 0;
-
 }

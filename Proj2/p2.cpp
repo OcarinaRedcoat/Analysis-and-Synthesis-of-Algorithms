@@ -10,6 +10,7 @@ class ResidualArch {
 
  public:
   Vertex *dest_vertex;
+  // ResidualArch *pair;
 
   ResidualArch() {}
 
@@ -36,7 +37,6 @@ class Vertex {
   Vertex *predecessorVertex;  // if the  predecessor vertex is the source the
                               // vertex is a supplier if not is a station
   ResidualArch *predecessorArch;
-  ResidualArch *toHimlself;
 
   list<ResidualArch *> arches;
   Vertex() {  // probably source and source has no predecessor Vertex or
@@ -205,7 +205,6 @@ class EdmondsKarp {
       }
     }
   }
-
   void printOutput() { printf("%d\n", flow); }
 };
 

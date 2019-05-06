@@ -1,22 +1,29 @@
 #include <stdio.h>
 #include <climits>
 #include <list>
+#include <set>
 using namespace std;
 
 class Vertex;
+
+typedef struct {
+  Vertex *orig, *dest;
+} ArchPair;
 
 class ResidualArch {
   int capacity;
 
  public:
   Vertex *dest_vertex;
+  Vertex *orig_vertex;
   // ResidualArch *pair;
 
   ResidualArch() {}
 
-  ResidualArch(int cap, Vertex *dest) {
+  ResidualArch(int cap, Vertex *dest, Vertex *orig) {
     capacity = cap;
     dest_vertex = dest;
+    orig_vertex = orig;
   }
 
   int getCapacity() { return capacity; }
@@ -38,6 +45,7 @@ class Vertex {
                               // vertex is a supplier if not is a station
   ResidualArch *predecessorArch;
 
+  list<ResidualArch *> backArches;
   list<ResidualArch *> arches;
   Vertex() {  // probably source and source has no predecessor Vertex or
               // predecessor Arch
@@ -53,11 +61,22 @@ class Vertex {
 
   void addFlux(int f) { production = production - f; }
 
+  void addResidualBackArch(ResidualArch *residualArch) {
+    backArches.push_back(residualArch);
+  }
+
   void addResidualArch(int cap, Vertex *dest) {
-    ResidualArch *temp = new ResidualArch(cap, dest);
+    ResidualArch *temp = new ResidualArch(cap, dest, this);
+    dest->addResidualBackArch(temp);
     arches.push_back(temp);
   }
 };
+
+inline bool operator<(const ArchPair &a, const ArchPair &b) {
+  if (a.orig->getId() == b.orig->getId())
+    return a.dest->getId() < b.dest->getId();
+  return a.orig->getId() < b.orig->getId();
+}
 
 class Graph {
  public:
@@ -181,11 +200,75 @@ class BFS {
       return resultBFS;
     }
   }
+
+  list<ResidualArch *> findGraphCut(Graph g, set<int> *augmentingStations,
+                                    set<ArchPair> *augmentingArchs) {
+    setupGraph(g);
+
+    list<Vertex *> stack;
+    stack.push_front(g.hyper);
+
+    while (g.hyper->predecessorVertex == NULL && !stack.empty()) {
+      Vertex *temp = stack.front();
+      stack.pop_front();
+
+      for (ResidualArch *arch : temp->backArches) {
+        /*         if (!arch->dest_vertex->visited && arch->getCapacity() > 0) {
+                  if (arch->dest_vertex->getId() > g.suppliers + 1 &&
+                      arch->dest_vertex->production == 0) {
+                    continue;
+                  } else {
+                    stack.push_back(arch->dest_vertex);
+                    arch->dest_vertex->predecessorVertex = temp;
+                    arch->dest_vertex->predecessorArch = arch;
+                    arch->dest_vertex->visited = true;
+                  }
+                  if (arch->dest_vertex == g.hyper) {
+                    break;
+                  }
+                } */
+        /* if(arch->getCapacity() == 0) {
+          ArchPair newAugmentingArch;
+          newAugmentingArch.orig = arch->dest_vertex->
+          augmentingArchs->insert()
+        } */
+        /* printf("arco dest %d, vertice %d\n", arch->dest_vertex->getId(),
+               temp->getId()); */
+        if (arch->getCapacity() == 0 && arch->orig_vertex->getId() != 0) {
+          ArchPair newAugmentingArch;
+          newAugmentingArch.orig = arch->orig_vertex;
+          newAugmentingArch.dest = arch->dest_vertex;
+          augmentingArchs->insert(newAugmentingArch);
+        } else if (arch->orig_vertex->production == 0 &&
+                   arch->orig_vertex->getId() != 0) {
+          augmentingStations->insert(arch->orig_vertex->getId());
+        } else {
+          stack.push_back(arch->orig_vertex);
+        }
+      }
+      // printf("break\n");
+    }
+
+    list<ResidualArch *> resultBFS;
+
+    if (g.hyper->visited == false) {
+      return resultBFS;
+    } else {
+      Vertex *temp = g.hyper;
+      while (temp->predecessorArch != NULL) {
+        resultBFS.push_front(temp->predecessorArch);
+        temp = temp->predecessorVertex;
+      }
+      return resultBFS;
+    }
+  }
 };
 
 class EdmondsKarp {
  private:
   int flow;
+  set<int> augmentingStations;
+  set<ArchPair> augmementingArchs;
 
  public:
   EdmondsKarp() {}
@@ -216,8 +299,25 @@ class EdmondsKarp {
         break;
       }
     }
+    // End of while
+
+    bfsAlgorithm.findGraphCut(g, &augmentingStations, &augmementingArchs);
   }
-  void printOutput() { printf("%d\n", flow); }
+
+  void printOutput() {
+    bool first = true;
+    printf("%d\n", flow);
+    for (int stationId : augmentingStations) {
+      if (first)
+        printf("%d", stationId);
+      else
+        printf(" %d", stationId);
+    }
+    printf("\n");
+    for (ArchPair archPair : augmementingArchs) {
+      printf("%d %d\n", archPair.orig->getId(), archPair.dest->getId());
+    }
+  }
 };
 
 int main() {

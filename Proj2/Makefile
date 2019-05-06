@@ -15,3 +15,6 @@ clean:
 	rm -f $(TARGET) ./tests/*.my.out ./tests/*.diff
 	@echo
 	@echo ----  Very nice!  ----
+
+run:
+	./test.sh

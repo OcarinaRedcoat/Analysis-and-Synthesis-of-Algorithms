@@ -11,7 +11,7 @@ do
     out="$name.out"
     myout="$name.my.out"
     mydiff="$name.diff"
-    program="../p1"
+    program="../p2"
     $program < $in > $myout
     diff $out $myout > $mydiff
     if [[ -s ${mydiff} ]]; then

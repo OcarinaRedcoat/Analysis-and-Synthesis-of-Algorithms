@@ -51,6 +51,8 @@ class Vertex {
 
   int getId() { return id; }
 
+  void addFlux(int f) { production = production - f; }
+
   void addResidualArch(int cap, Vertex *dest) {
     ResidualArch *temp = new ResidualArch(cap, dest);
     arches.push_back(temp);
@@ -150,11 +152,15 @@ class BFS {
 
       for (ResidualArch *arch : temp->arches) {
         if (!arch->dest_vertex->visited && arch->getCapacity() > 0) {
-          stack.push_back(arch->dest_vertex);
-          arch->dest_vertex->predecessorVertex = temp;
-          arch->dest_vertex->predecessorArch = arch;
-          arch->dest_vertex->visited = true;
-
+          if (arch->dest_vertex->getId() > g.suppliers + 1 &&
+              arch->dest_vertex->production == 0) {
+            continue;
+          } else {
+            stack.push_back(arch->dest_vertex);
+            arch->dest_vertex->predecessorVertex = temp;
+            arch->dest_vertex->predecessorArch = arch;
+            arch->dest_vertex->visited = true;
+          }
           if (arch->dest_vertex == g.hyper) {
             break;
           }
@@ -194,10 +200,16 @@ class EdmondsKarp {
       if (!path.empty()) {
         int df = INT_MAX;
         for (ResidualArch *arch : path) {
+          if (arch->dest_vertex->getId() > g.suppliers + 1) {
+            df = min(df, arch->dest_vertex->production);
+          }
           df = min(df, arch->getCapacity());
         }
         flow += df;
         for (ResidualArch *arch : path) {
+          if (arch->dest_vertex->getId() > g.suppliers + 1) {
+            arch->dest_vertex->addFlux(df);
+          }
           arch->addFlux(df);
         }
       } else {

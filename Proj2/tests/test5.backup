@@ -1,0 +1,16 @@
+id: 2 -- capacity: 3
+id: 3 -- capacity: 15
+id: 4 -- capacity: 5
+id: 5 -- capacity: 4
+id: 6 -- capacity: 0
+id: 7 -- capacity: 0
+orin: 2 -- dest: 7 -- capacity: 0
+orin: 2 -- dest: 6 -- capacity: 0
+orin: 3 -- dest: 7 -- capacity: 0
+orin: 3 -- dest: 6 -- capacity: 0
+orin: 3 -- dest: 5 -- capacity: 0
+orin: 4 -- dest: 6 -- capacity: 0
+orin: 4 -- dest: 5 -- capacity: 4
+orin: 5 -- dest: 1 -- capacity: 5
+orin: 6 -- dest: 1 -- capacity: 2
+orin: 7 -- dest: 1 -- capacity: 2

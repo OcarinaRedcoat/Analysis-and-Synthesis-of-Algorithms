@@ -37,7 +37,7 @@ class Vertex {
 
  public:
   int production;
-
+  bool cutVisited;
   bool visited;
   bool processed;
 
@@ -153,6 +153,7 @@ class BFS {
 
     for (int i = 0; i < g.suppliers + g.stations; i++) {
       g.vertexes[i].visited = false;
+      g.vertexes[i].cutVisited = false;
       g.vertexes[i].predecessorVertex = NULL;
       g.vertexes[i].predecessorArch = NULL;
     }
@@ -204,13 +205,13 @@ class BFS {
   list<ResidualArch *> findGraphCut(Graph g, set<int> *augmentingStations,
                                     set<ArchPair> *augmentingArchs) {
     setupGraph(g);
-
     list<Vertex *> stack;
     stack.push_front(g.hyper);
 
     while (g.hyper->predecessorVertex == NULL && !stack.empty()) {
       Vertex *temp = stack.front();
       stack.pop_front();
+      bool noMinCut = false;
 
       for (ResidualArch *arch : temp->backArches) {
         /*         if (!arch->dest_vertex->visited && arch->getCapacity() > 0) {
@@ -234,18 +235,32 @@ class BFS {
         } */
         /* printf("arco dest %d, vertice %d\n", arch->dest_vertex->getId(),
                temp->getId()); */
-        if (arch->getCapacity() == 0 && arch->orig_vertex->getId() != 0) {
+        if (arch->orig_vertex->getId() <= g.suppliers + 1 &&
+            arch->getCapacity() != 0 && arch->orig_vertex->production == 0) {
+          augmentingArchs->clear();
+          augmentingStations->clear();
+          /* printf("orig %d, dest %d, capacity %d \n",
+             arch->orig_vertex->getId(), arch->dest_vertex->getId(),
+             arch->orig_vertex->production); */
+          noMinCut = true;
+        } else if (arch->getCapacity() == 0 &&
+                   arch->orig_vertex->getId() != 0) {
           ArchPair newAugmentingArch;
           newAugmentingArch.orig = arch->orig_vertex;
           newAugmentingArch.dest = arch->dest_vertex;
           augmentingArchs->insert(newAugmentingArch);
         } else if (arch->orig_vertex->production == 0 &&
-                   arch->orig_vertex->getId() != 0) {
+                   arch->orig_vertex->getId() != 0 &&
+                   arch->orig_vertex->getId() > g.suppliers + 1) {
           augmentingStations->insert(arch->orig_vertex->getId());
-        } else {
+        } else if (!arch->orig_vertex->cutVisited){
+          /* printf("orig %d, dest %d, capacity %d \n", arch->orig_vertex->getId(),
+                 arch->dest_vertex->getId(), arch->orig_vertex->production); */
+          arch->orig_vertex->cutVisited = true;
           stack.push_back(arch->orig_vertex);
         }
       }
+      if (noMinCut) break;
       // printf("break\n");
     }
 
@@ -290,6 +305,9 @@ class EdmondsKarp {
         }
         flow += df;
         for (ResidualArch *arch : path) {
+          if (arch->orig_vertex->getId() <= g.suppliers + 1) {
+            arch->orig_vertex->addFlux(df);
+          }
           if (arch->dest_vertex->getId() > g.suppliers + 1) {
             arch->dest_vertex->addFlux(df);
           }
@@ -308,9 +326,10 @@ class EdmondsKarp {
     bool first = true;
     printf("%d\n", flow);
     for (int stationId : augmentingStations) {
-      if (first)
+      if (first) {
         printf("%d", stationId);
-      else
+        first = !first;
+      } else
         printf(" %d", stationId);
     }
     printf("\n");

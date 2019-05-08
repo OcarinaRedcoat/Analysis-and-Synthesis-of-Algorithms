@@ -16,6 +16,8 @@ class ResidualArch {
  public:
   Vertex *dest_vertex;
   Vertex *orig_vertex;
+  bool canBeCut;
+  bool augmentingArch;
   // ResidualArch *pair;
 
   ResidualArch() {}
@@ -24,6 +26,7 @@ class ResidualArch {
     capacity = cap;
     dest_vertex = dest;
     orig_vertex = orig;
+    canBeCut = true;
   }
 
   int getCapacity() { return capacity; }
@@ -38,6 +41,8 @@ class Vertex {
  public:
   int production;
   bool cutVisited;
+  bool canBeCut;
+  bool augmentingVertex;
   bool visited;
   bool processed;
 
@@ -141,6 +146,8 @@ class Graph {
 
 class BFS {
  public:
+  set<int> *augmentingStations;
+  set<ArchPair> *augmentingArchs;
   void setupGraph(Graph g) {
     g.source->visited = false;
     g.hyper->visited = false;
@@ -154,8 +161,15 @@ class BFS {
     for (int i = 0; i < g.suppliers + g.stations; i++) {
       g.vertexes[i].visited = false;
       g.vertexes[i].cutVisited = false;
+      g.vertexes[i].canBeCut = true;
       g.vertexes[i].predecessorVertex = NULL;
       g.vertexes[i].predecessorArch = NULL;
+    }
+  }
+
+  void resetVisits(Graph *g) {
+    for (int i = 0; i < g->suppliers + g->stations; i++) {
+      if (!g->vertexes[i].augmentingVertex) g->vertexes[i].cutVisited = false;
     }
   }
 
@@ -202,81 +216,81 @@ class BFS {
     }
   }
 
-  list<ResidualArch *> findGraphCut(Graph g, set<int> *augmentingStations,
-                                    set<ArchPair> *augmentingArchs) {
+  void saveAllCuts(Graph g, set<int> *augmentingStations,
+                   set<ArchPair> *augmentingArchs) {
     setupGraph(g);
+
     list<Vertex *> stack;
-    stack.push_front(g.hyper);
+    stack.push_front(g.source);
+    g.source->visited = true;
 
     while (g.hyper->predecessorVertex == NULL && !stack.empty()) {
       Vertex *temp = stack.front();
       stack.pop_front();
-      bool noMinCut = false;
-
-      for (ResidualArch *arch : temp->backArches) {
-        /*         if (!arch->dest_vertex->visited && arch->getCapacity() > 0) {
-                  if (arch->dest_vertex->getId() > g.suppliers + 1 &&
-                      arch->dest_vertex->production == 0) {
-                    continue;
-                  } else {
-                    stack.push_back(arch->dest_vertex);
-                    arch->dest_vertex->predecessorVertex = temp;
-                    arch->dest_vertex->predecessorArch = arch;
-                    arch->dest_vertex->visited = true;
-                  }
-                  if (arch->dest_vertex == g.hyper) {
-                    break;
-                  }
-                } */
-        /* if(arch->getCapacity() == 0) {
-          ArchPair newAugmentingArch;
-          newAugmentingArch.orig = arch->dest_vertex->
-          augmentingArchs->insert()
-        } */
-        /* printf("arco dest %d, vertice %d\n", arch->dest_vertex->getId(),
-               temp->getId()); */
-        if (arch->orig_vertex->getId() <= g.suppliers + 1 &&
-            arch->getCapacity() != 0 && arch->orig_vertex->production == 0) {
-          augmentingArchs->clear();
-          augmentingStations->clear();
-          /* printf("orig %d, dest %d, capacity %d \n",
-             arch->orig_vertex->getId(), arch->dest_vertex->getId(),
-             arch->orig_vertex->production); */
-          noMinCut = true;
-        } else if (arch->getCapacity() == 0 &&
-                   arch->orig_vertex->getId() != 0) {
+      if (temp->augmentingVertex && temp->getId() > g.suppliers + 1) {
+        augmentingStations->insert(temp->getId());
+      }
+      for (ResidualArch *arch : temp->arches) {
+        if (arch->augmentingArch) {
           ArchPair newAugmentingArch;
           newAugmentingArch.orig = arch->orig_vertex;
           newAugmentingArch.dest = arch->dest_vertex;
           augmentingArchs->insert(newAugmentingArch);
-        } else if (arch->orig_vertex->production == 0 &&
-                   arch->orig_vertex->getId() != 0 &&
-                   arch->orig_vertex->getId() > g.suppliers + 1) {
-          augmentingStations->insert(arch->orig_vertex->getId());
-        } else if (!arch->orig_vertex->cutVisited){
-          /* printf("orig %d, dest %d, capacity %d \n", arch->orig_vertex->getId(),
-                 arch->dest_vertex->getId(), arch->orig_vertex->production); */
-          arch->orig_vertex->cutVisited = true;
-          stack.push_back(arch->orig_vertex);
+        }
+        if (!arch->dest_vertex->visited) {
+          arch->dest_vertex->visited = true;
+          stack.push_back(arch->dest_vertex);
         }
       }
-      if (noMinCut) break;
-      // printf("break\n");
-    }
-
-    list<ResidualArch *> resultBFS;
-
-    if (g.hyper->visited == false) {
-      return resultBFS;
-    } else {
-      Vertex *temp = g.hyper;
-      while (temp->predecessorArch != NULL) {
-        resultBFS.push_front(temp->predecessorArch);
-        temp = temp->predecessorVertex;
-      }
-      return resultBFS;
     }
   }
+
+  void markNextVertices(Graph g, Vertex *newCutVertex) {
+    list<Vertex *> stack;
+    stack.push_front(newCutVertex);
+
+    while (g.hyper->predecessorVertex == NULL && !stack.empty()) {
+      Vertex *temp = stack.front();
+      stack.pop_front();
+
+      for (ResidualArch *arch : temp->arches) {
+        if (arch->dest_vertex->getId() != 1 && !arch->dest_vertex->cutVisited) {
+          arch->dest_vertex->canBeCut = false;
+          arch->dest_vertex->cutVisited = true;
+          stack.push_back(arch->dest_vertex);
+          arch->dest_vertex->augmentingVertex = false;
+        }
+        arch->augmentingArch = false;
+        arch->canBeCut = false;
+      }
+    }
+    resetVisits(&g);
+  }
+
+  void findGraphCutDFSUtil(Graph g, Vertex *vertex) {
+    vertex->cutVisited = true;
+    if (vertex->augmentingVertex) return;
+    if (vertex->getId() != 0 && vertex->canBeCut && vertex->production == 0) {
+      vertex->augmentingVertex = true;
+      resetVisits(&g);
+      markNextVertices(g, vertex);
+      findGraphCutDFSUtil(g, g.hyper);
+    }
+    for (ResidualArch *arch : vertex->backArches) {
+      if (!vertex->augmentingVertex) {
+        if (arch->getCapacity() == 0 && arch->orig_vertex->getId() != 0 &&
+            arch->canBeCut) {
+          arch->augmentingArch = true;
+        } else if (arch->orig_vertex->getId() != 0 &&
+                   !arch->orig_vertex->cutVisited) {
+          findGraphCutDFSUtil(g, arch->orig_vertex);
+        }
+      }
+    }
+  }
+
+  void findGraphCutDFS(Graph g) { findGraphCutDFSUtil(g, g.hyper); }
+
 };
 
 class EdmondsKarp {
@@ -319,7 +333,8 @@ class EdmondsKarp {
     }
     // End of while
 
-    bfsAlgorithm.findGraphCut(g, &augmentingStations, &augmementingArchs);
+    bfsAlgorithm.findGraphCutDFS(g);
+    bfsAlgorithm.saveAllCuts(g, &augmentingStations, &augmementingArchs);
   }
 
   void printOutput() {

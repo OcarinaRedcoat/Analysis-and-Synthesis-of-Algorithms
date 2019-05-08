@@ -16,5 +16,7 @@ do
     diff $out $myout > $mydiff
     if [[ -s ${mydiff} ]]; then
         echo "FAIL: $in "
+    else
+        echo "Passed :) "
     fi
 done

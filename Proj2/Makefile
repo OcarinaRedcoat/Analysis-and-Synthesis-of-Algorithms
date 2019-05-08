@@ -12,7 +12,7 @@ clean:
 	@echo 
 	@echo ----  Cleaning project ...  ----
 	@echo 
-	rm -f $(TARGET) ./tests/*.my.out ./tests/*.diff massif.out.*
+	rm -f $(TARGET) ./tests/*.my.out ./tests/*.diff massif.out.* ./student-tests/*/diff ./student-tests/*/my.out
 	@echo
 	@echo ----  Very nice!  ----
 

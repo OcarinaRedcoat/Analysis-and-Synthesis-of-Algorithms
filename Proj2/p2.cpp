@@ -290,7 +290,6 @@ class BFS {
   }
 
   void findGraphCutDFS(Graph g) { findGraphCutDFSUtil(g, g.hyper); }
-
 };
 
 class EdmondsKarp {

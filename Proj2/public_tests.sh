@@ -16,8 +16,8 @@ do
     $program < $in > $myout
     diff $out $myout > $mydiff
     if [[ -s ${mydiff} ]]; then
-        echo "FAIL: $in "
+        echo "FAIL 👎 : $in "
     else
-        echo "Passed :) "
+        echo "Passed 👍"
     fi
 done

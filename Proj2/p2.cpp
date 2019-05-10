@@ -229,13 +229,21 @@ class BFS {
       stack.pop_front();
       if (temp->augmentingVertex && temp->getId() > g.suppliers + 1) {
         augmentingStations->insert(temp->getId());
+        // printf("---id %d\n", temp->getId());
+      }
+      if (temp->augmentingVertex) {
+        continue;
       }
       for (ResidualArch *arch : temp->arches) {
+        /* printf("----orig %d, dest %d\n", arch->orig_vertex->getId(),
+                 arch->dest_vertex->getId()); */
         if (arch->augmentingArch) {
           ArchPair newAugmentingArch;
           newAugmentingArch.orig = arch->orig_vertex;
           newAugmentingArch.dest = arch->dest_vertex;
           augmentingArchs->insert(newAugmentingArch);
+
+          continue;
         }
         if (!arch->dest_vertex->visited) {
           arch->dest_vertex->visited = true;
@@ -249,22 +257,15 @@ class BFS {
     list<Vertex *> stack;
     stack.push_front(newCutVertex);
 
-    while (g.hyper->predecessorVertex == NULL && !stack.empty()) {
-      Vertex *temp = stack.front();
-      stack.pop_front();
-
-      for (ResidualArch *arch : temp->arches) {
-        if (arch->dest_vertex->getId() != 1 && !arch->dest_vertex->cutVisited) {
-          arch->dest_vertex->canBeCut = false;
-          arch->dest_vertex->cutVisited = true;
-          stack.push_back(arch->dest_vertex);
-          arch->dest_vertex->augmentingVertex = false;
-        }
-        arch->augmentingArch = false;
-        arch->canBeCut = false;
+    for (ResidualArch *arch : newCutVertex->arches) {
+      if (arch->dest_vertex->getId() != 1 && arch->getCapacity() == 0) {
+        arch->dest_vertex->canBeCut = false;
+        arch->dest_vertex->cutVisited = true;
+        arch->dest_vertex->augmentingVertex = false;
       }
+      arch->augmentingArch = false;
+      arch->canBeCut = false;
     }
-    resetVisits(&g);
   }
 
   void findGraphCutDFSUtil(Graph g, Vertex *vertex) {
@@ -275,11 +276,15 @@ class BFS {
       resetVisits(&g);
       markNextVertices(g, vertex);
       findGraphCutDFSUtil(g, g.hyper);
+      /* printf("id %d\n", vertex->getId()); */
+      return;
     }
     for (ResidualArch *arch : vertex->backArches) {
       if (!vertex->augmentingVertex) {
         if (arch->getCapacity() == 0 && arch->orig_vertex->getId() != 0 &&
             arch->canBeCut) {
+          /* printf("orig %d, dest %d\n", arch->orig_vertex->getId(),
+                 arch->dest_vertex->getId()); */
           arch->augmentingArch = true;
         } else if (arch->orig_vertex->getId() != 0 &&
                    !arch->orig_vertex->cutVisited) {

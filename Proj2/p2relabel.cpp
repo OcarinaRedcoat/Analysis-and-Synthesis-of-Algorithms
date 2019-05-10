@@ -65,6 +65,7 @@ class Vertex {
   ResidualArch *predecessorArch;
 
   list<ResidualArch *> arches;
+  list<ResidualArch *> backArches;
   queue<ResidualArch *> archeLessHeight;
   Vertex() : height(0), excess(0), processed(false) {}
 
@@ -81,9 +82,30 @@ class Vertex {
 
   // void addFlux(int f) { production = production - f; }
 
+  void addResidualBackArch(ResidualArch *residualArch) {
+    backArches.push_back(residualArch);
+  }
+
   void addResidualArch(int cap, Vertex *dest) {
     ResidualArch *temp = new ResidualArch(cap, dest, this);
+    dest->addResidualBackArch(temp);
     arches.push_back(temp);
+  }
+
+  void updateArchLessQueue() {
+    for (ResidualArch *temp : arches) {
+      if (temp->dest_vertex->height < height) {
+        printf("height %d, %d\n", temp->dest_vertex->height, height);
+        archeLessHeight.push(temp);
+        printf("%d\n", archeLessHeight.size());
+      }
+    }
+
+    for (ResidualArch *temp : backArches) {
+      if (temp->origin_vertex->height < height) {
+        archeLessHeight.push(temp);
+      }
+    }
   }
 };
 
@@ -213,23 +235,29 @@ class PushRelabel {
 
   void relabel(Vertex *u) {
     int min_height = INT_MAX;
-
     for (ResidualArch *arc : u->arches) {
-      if (arc->getCapacity() > 0 && arc->dest_vertex->height < min_height) {
+      if (arc->getCapacity() > 0 && arc->dest_vertex->height <= min_height) {
+        printf("--- %d\n", arc->dest_vertex->height);
+
         min_height = arc->dest_vertex->height;
       }
     }
 
-    assert(u->excess > 0);
-    assert(u->height <= min_height);
+    /* for (ResidualArch *arc : u->backArches) {
+      if (arc->getCapacity() > 0 && arc->origin_vertex->height <= min_height) {
+        printf("- %d\n", arc->dest_vertex->height);
+
+        min_height = arc->dest_vertex->height;
+      }
+    } */
+
+   /*  assert(u->excess > 0);
+    assert(u->height <= min_height); */
+        printf("antes %d\n", min_height);
 
     u->height = min_height + 1;
 
-    for (ResidualArch *temp : u->arches) {
-      if (temp->dest_vertex->height < u->height) {
-        u->archeLessHeight.push(temp);
-      }
-    }
+    u->updateArchLessQueue();
   }
 
   void push(Vertex *u, ResidualArch *arc) {
@@ -244,13 +272,15 @@ class PushRelabel {
   }
 
   void discharge(Vertex *u) {
-
+    u->updateArchLessQueue();
+    printf("1 - %d\n", u->archeLessHeight.size());
     while (u->excess > 0) {
-      if (!u->archeLessHeight.empty()) {
+      if (u->archeLessHeight.empty()) {
         relabel(u);
       } else {
         ResidualArch *arc = u->archeLessHeight.front();
         u->archeLessHeight.pop();
+
         if (arc->getCapacity() > 0 && u->height > arc->dest_vertex->height) {
           push(u, arc);
         } else {

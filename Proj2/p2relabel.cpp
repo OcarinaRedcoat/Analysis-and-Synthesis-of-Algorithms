@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <climits>
-#include <queue>
 #include <list>
+#include <queue>
 using namespace std;
 
 class Vertex;
@@ -18,7 +18,7 @@ class ResidualArch {
 
   bool processed;
 
-  ResidualArch() : flux(0) {}
+  ResidualArch() : flux(0), processed(false) {}
 
   ResidualArch(int cap, Vertex *dest) : flux(0), processed(false) {
     capacity = cap;
@@ -42,7 +42,7 @@ class ResidualArch {
   }
 
   int getFlux() {
-    //printf("%d\n", flux);
+    // printf("%d\n", flux);
     return flux;
   }
 };
@@ -65,6 +65,7 @@ class Vertex {
   ResidualArch *predecessorArch;
 
   list<ResidualArch *> arches;
+  queue<ResidualArch *> archeLessHeight;
   Vertex() : height(0), excess(0), processed(false) {}
 
   Vertex(int i) : height(0), excess(0), processed(false) { id = i; }
@@ -171,7 +172,9 @@ class Graph {
     for (int i = 0; i < suppliers + (2 * stations); i++) {
       if (!vertexes[i].arches.empty())
         for (ResidualArch *arch : vertexes[i].arches) {
-          flow += arch->getFlux();
+          if (arch->dest_vertex->getId() == 1) {
+            flow += arch->getFlux();
+          }
         }
     }
     printf("%d\n", flow);
@@ -191,11 +194,11 @@ class PushRelabel {
   PushRelabel(Graph g) : flow(0) { graph = g; }
 
   void init_pre_flow(Graph g) {
-    g.source->height = maxHeight; 
+    g.source->height = maxHeight;
     g.source->processed = true;
 
     for (ResidualArch *arch : g.source->arches) {
-      int capacity = arch->getCapacity(); 
+      int capacity = arch->getCapacity();
       if (capacity > 0) {
         arch->addFlux(capacity);
         g.source->excess -= capacity;
@@ -210,6 +213,7 @@ class PushRelabel {
 
   void relabel(Vertex *u) {
     int min_height = INT_MAX;
+
     for (ResidualArch *arc : u->arches) {
       if (arc->getCapacity() > 0 && arc->dest_vertex->height < min_height) {
         min_height = arc->dest_vertex->height;
@@ -220,6 +224,12 @@ class PushRelabel {
     assert(u->height <= min_height);
 
     u->height = min_height + 1;
+
+    for (ResidualArch *temp : u->arches) {
+      if (temp->dest_vertex->height < u->height) {
+        u->archeLessHeight.push(temp);
+      }
+    }
   }
 
   void push(Vertex *u, ResidualArch *arc) {
@@ -234,17 +244,17 @@ class PushRelabel {
   }
 
   void discharge(Vertex *u) {
-    list<ResidualArch *> v_arcs = u->arches;
 
     while (u->excess > 0) {
-      if (v_arcs.size() == 0) {
+      if (!u->archeLessHeight.empty()) {
         relabel(u);
-        v_arcs = u->arches;
       } else {
-        ResidualArch *arc = v_arcs.front();
-        v_arcs.pop_front();
+        ResidualArch *arc = u->archeLessHeight.front();
+        u->archeLessHeight.pop();
         if (arc->getCapacity() > 0 && u->height > arc->dest_vertex->height) {
           push(u, arc);
+        } else {
+          u->archeLessHeight.pop();
         }
       }
     }
@@ -257,11 +267,11 @@ class PushRelabel {
 
     while (!stack.empty()) {
       firstElem = stack.front();
+
       stack.pop();
 
       discharge(firstElem);
       firstElem = stack.front();
-
     }
   }
 };
@@ -273,7 +283,7 @@ int main() {
   }
   PushRelabel *algorithm = new PushRelabel(g);
   algorithm->run(g);
-  // g.printOutput();
+  g.printOutput();
   // g.display();
   return 0;
 }

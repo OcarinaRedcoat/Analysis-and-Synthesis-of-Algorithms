@@ -253,7 +253,7 @@ class BFS {
     }
   }
 
-  void markNextVertices(Graph g, Vertex *newCutVertex) {
+  void markNextVertices(Vertex *newCutVertex) {
     list<Vertex *> stack;
     stack.push_front(newCutVertex);
 
@@ -274,7 +274,7 @@ class BFS {
     if (vertex->getId() != 0 && vertex->canBeCut && vertex->production == 0) {
       vertex->augmentingVertex = true;
       resetVisits(&g);
-      markNextVertices(g, vertex);
+      markNextVertices(vertex);
       findGraphCutDFSUtil(g, g.hyper);
       /* printf("id %d\n", vertex->getId()); */
       return;

@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <climits>
+#include <queue>
 #include <list>
 using namespace std;
 
@@ -40,8 +41,10 @@ class ResidualArch {
     // printf("%d\n", capacity);
   }
 
-  int getFlux() { printf("%d\n", flux);
-  return flux; }
+  int getFlux() {
+    //printf("%d\n", flux);
+    return flux;
+  }
 };
 
 class Vertex {
@@ -181,19 +184,18 @@ class PushRelabel {
   int maxHeight;
 
  public:
-  list<Vertex *> stack;
-  list<Vertex *>::iterator vertex_iterator;
+  queue<Vertex *> stack;
   Graph graph;
+  Vertex *firstElem;
 
   PushRelabel(Graph g) : flow(0) { graph = g; }
 
   void init_pre_flow(Graph g) {
-    g.source->height = maxHeight;  // set height source
-
+    g.source->height = maxHeight; 
     g.source->processed = true;
 
     for (ResidualArch *arch : g.source->arches) {
-      int capacity = arch->getCapacity();  // since our capacity keeps changing
+      int capacity = arch->getCapacity(); 
       if (capacity > 0) {
         arch->addFlux(capacity);
         g.source->excess -= capacity;
@@ -201,7 +203,7 @@ class PushRelabel {
         arch->dest_vertex->excess += capacity;
         // printf("%d\n", arch->dest_vertex->excess);
         arch->dest_vertex->processed = true;
-        stack.push_front(arch->dest_vertex);
+        stack.push(arch->dest_vertex);
       }
     }
   }
@@ -211,8 +213,9 @@ class PushRelabel {
     for (ResidualArch *arc : u->arches) {
       if (arc->getCapacity() > 0 && arc->dest_vertex->height < min_height) {
         min_height = arc->dest_vertex->height;
-      } 
+      }
     }
+
     assert(u->excess > 0);
     assert(u->height <= min_height);
 
@@ -225,8 +228,8 @@ class PushRelabel {
     u->excess -= d;
     arc->dest_vertex->excess += d;
     if (!arc->dest_vertex->processed) {
-      stack.push_front(arc->dest_vertex);
-      vertex_iterator = stack.begin();
+      stack.push(arc->dest_vertex);
+      firstElem = stack.front();
     }
   }
 
@@ -252,14 +255,13 @@ class PushRelabel {
 
     init_pre_flow(g);
 
-    vertex_iterator = stack.begin();
-    Vertex *u = *(vertex_iterator);
-    while (vertex_iterator != stack.end()) {
-      vertex_iterator = stack.erase(vertex_iterator);
-      // int old_height = u->height;
-      discharge(u);
+    while (!stack.empty()) {
+      firstElem = stack.front();
+      stack.pop();
 
-      u = *(vertex_iterator);
+      discharge(firstElem);
+      firstElem = stack.front();
+
     }
   }
 };
@@ -271,7 +273,7 @@ int main() {
   }
   PushRelabel *algorithm = new PushRelabel(g);
   algorithm->run(g);
-  g.printOutput();
+  // g.printOutput();
   // g.display();
   return 0;
 }

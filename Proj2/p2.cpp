@@ -113,13 +113,13 @@ class Vertex {
 
   void updateArchLessQueue() {
     for (ResidualArch *temp : backArches) {
-      if (temp->origin_vertex->height < height) {
+      if (temp->origin_vertex->height < height && temp->getFlux() > 0) {
         archeLessHeight.push(temp);
       }
     }
 
     for (ResidualArch *temp : arches) {
-      if (temp->dest_vertex->height < height) {
+      if (temp->dest_vertex->height < height && temp->getCapacity() > 0) {
         /*         printf("&&&&& id : %d altura: %d\n",
          * temp->dest_vertex->getId(), temp->dest_vertex->height);
          */
@@ -271,7 +271,7 @@ class PushRelabel {
 
   void relabel(Vertex *u) {
     int min_height = INT_MAX;
-    for (ResidualArch *arc : u->arches) {
+    for (ResidualArch *arc : u->arches) {  // Front Edges
       if (arc->getCapacity() > 0 && arc->dest_vertex->height <= min_height) {
         /* printf(">>>>>>>%d, height: %d\n", arc->dest_vertex->getId(),
          * arc->dest_vertex->height); */
@@ -279,8 +279,8 @@ class PushRelabel {
       }
     }
 
-    for (ResidualArch *arc : u->backArches) {
-      if (arc->origin_vertex->height <= min_height) {
+    for (ResidualArch *arc : u->backArches) {  // Back Edges
+      if (arc->origin_vertex->height <= min_height && arc->flux > 0) {
         min_height = arc->origin_vertex->height;
       }
       /* printf("dest: %d, height: %d, min_height: %d\n",
@@ -300,33 +300,26 @@ class PushRelabel {
 
   void push(Vertex *u, ResidualArch *arc) {
     int d = 0;
-    if (arc->dest_vertex->getId() == u->getId()) {
-      d = min(u->excess, arc->flux - arc->getCapacity());
+    if (arc->dest_vertex->getId() == u->getId()) {  // Push back
+      d = min(u->excess, arc->flux);
       arc->addFlux(-d);
-      if (u->getId() < graph.suppliers + 1) {
-        u->addFlux(-d);
-      } else if (arc->origin_vertex->getId() < graph.suppliers + 1) {
-        arc->origin_vertex->addFlux(-d);
-      }
       /* printf("??????? capa %d, d %d \n", arc->getCapacity(), d); */
       arc->origin_vertex->excess += d;
       if (arc->origin_vertex->getId() != 0) {
-        /* printf("|||||| %d\n", arc->origin_vertex->getId()); */
+        /* printf("|?|?|?|?|| id %d\n", arc->origin_vertex->getId());
+        printf("u->excess %d, arc->flux %d, arc->getCapacity() %d, DDD: %d\n",
+               u->excess, arc->flux, arc->getCapacity(), d); */
         stack.push(arc->origin_vertex);
       }
-    } else {
+    } else {  // Push front
       d = min(u->excess, arc->getCapacity());
       /* printf("##### capa %d, d %d \n", arc->getCapacity(), d); */
       arc->addFlux(d);
-      if (arc->dest_vertex->getId() < graph.suppliers + 1) {
-        u->addFlux(d);
-      } else if (arc->dest_vertex->getId() < graph.stations + 1) {
-        arc->dest_vertex->addFlux(d);
-      }
       arc->dest_vertex->excess += d;
       if (arc->dest_vertex->getId() != 1) {
-        /* printf("|||||| %d\n", arc->origin_vertex->getId()); */
+        /* printf("|#|#|#|#|| id %d\n", arc->origin_vertex->getId()); */
         stack.push(arc->dest_vertex);
+        /* printf("///// ALTURA %d \n", u->height); */
       }
     }
     u->excess -= d;
@@ -344,10 +337,10 @@ class PushRelabel {
         /* printf("id %d\n", u->getId()); */
       } else {
         ResidualArch *arc = u->archeLessHeight.front();
-       /*  printf("---- meu %d, orig: %d, dest %d, minha altura: %d, orig height %d\n",
-               u->getId(), arc->origin_vertex->getId(),
-               arc->dest_vertex->getId(), u->height,
-               arc->origin_vertex->height); */
+        /*  printf("---- meu %d, orig: %d, dest %d, minha altura: %d, orig
+           height %d\n", u->getId(), arc->origin_vertex->getId(),
+                arc->dest_vertex->getId(), u->height,
+                arc->origin_vertex->height); */
         u->archeLessHeight.pop();
 
         if (arc->getCapacity() > 0 || arc->dest_vertex->getId() == u->getId()) {
@@ -473,32 +466,6 @@ class PushRelabel {
     }
   }
 
-  /*   void findGraphCutDFSUtil(Vertex *vertex) {
-      vertex->cutVisited = true;
-      if (vertex->augmentingVertex) return;
-      if (vertex->getId() != 0 && vertex->canBeCut && vertex->production == 0) {
-        vertex->augmentingVertex = true;
-        resetVisits();
-        markNextVertices(vertex);
-        findGraphCutDFSUtil(graph.hyper);
-        printf("id %d\n", vertex->getId());
-        return;
-      }
-      for (ResidualArch *arch : vertex->backArches) {
-        if (!vertex->augmentingVertex) {
-          if (arch->getCapacity() == 0 && arch->origin_vertex->getId() != 0 &&
-              arch->canBeCut) {
-            printf("orig %d, dest %d\n", arch->origin_vertex->getId(),
-                   arch->dest_vertex->getId());
-            arch->augmentingArch = true;
-          } else if (arch->origin_vertex->getId() != 0 &&
-                     !arch->origin_vertex->cutVisited) {
-            findGraphCutDFSUtil(arch->origin_vertex);
-          }
-        }
-      }
-    } */
-
   void findGraphCutDFSUtil(Vertex *vertex) {
     vertex->cutVisited = true;
     /* printf("orig id %d, %d, flow: %d cap: %d, \n", vertex->getId(),
@@ -573,8 +540,8 @@ int main() {
   }
   PushRelabel *algorithm = new PushRelabel(g);
   algorithm->run(g);
-  // algorithm->findGraphCutDFS();
-  // algorithm->printOutput();
+  algorithm->findGraphCutDFS();
+  algorithm->printOutput();
   // g.display();
   return 0;
 }
